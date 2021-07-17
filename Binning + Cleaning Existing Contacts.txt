@@ -1,0 +1,206 @@
+### See All Tables on Server
+
+#### Enter into database
+
+\c 'database'
+
+#### Show all tables in database
+
+\dt to show tables
+
+OR 
+
+SELECT * FROM pg_catalog.pg_tables;
+
+And to narrow down further
+
+SELECT * FROM pg_catalog.pg_tables WHERE schemaname = 'erp';
+
+### See scheme for table
+
+\d erp.contact;
+
+     Column      |            Type             | Collation | Nullable |                                                                            Default
+
+------------------+-----------------------------+-----------+----------+-----------------------------------------------------------------------------------------------------------------
+----------------------------------------------
+ id               | text                        |           | not null |
+ cust_num         | text                        |           | not null |
+ cont_num         | text                        |           |          |
+ name             | text                        |           |          |
+ email_addr       | text                        |           |          |
+ address1         | text                        |           |          |
+ address2         | text                        |           |          |
+ address3         | text                        |           |          |
+ city             | text                        |           |          |
+ state            | text                        |           |          |
+ zip              | text                        |           |          |
+ phone            | text                        |           |          |
+ fax              | text                        |           |          |
+ ent_date         | date                        |           |          |
+ ent_by           | text                        |           |          |
+ web_user         | text                        |           |          |
+ web_pass         | text                        |           |          |
+ total_ytd_sls    | numeric(18,2)               |           |          |
+ total_py_sls     | numeric(18,2)               |           |          |
+ total_py2_sls    | numeric(18,2)               |           |          |
+ total_ytd_rtn    | numeric(18,2)               |           |          |
+ total_py_rtn     | numeric(18,2)               |           |          |
+ total_py2_rtn    | numeric(18,2)               |           |          |
+ ytd_rtn_cnt      | bigint                      |           |          |
+ py_rtn_cnt       | bigint                      |           |          |
+ py2_rtn_cnt      | bigint                      |           |          |
+ life_sls         | numeric(18,2)               |           |          |
+ last_update      | timestamp without time zone |           | not null |
+ pin_id           | text                        |           |          |
+ mkt1             | text                        |           |          |
+ mkt2             | text                        |           |          |
+ mkt3             | text                        |           |          |
+ first_name       | text                        |           |          |
+ last_name        | text                        |           |          |
+ prohibit_sls     | text                        |           |          |
+ source           | text                        |           |          |
+ last_quote_date  | date                        |           |          |
+ last_sale_date   | date                        |           |          |
+ department       | text                        |           |          |
+ title_num        | text                        |           |          |
+ title_desc       | text                        |           |          |
+ mbb_num          | text                        |           |          |
+ new_contact_flag | character(1)                |           |          |
+ inactive         | character(1)                |           |          |
+ inact_reason     | text                        |           |          |
+ email_mkt_flg    | character(1)                |           |          |
+ peer_cust_num    | text                        |           |          |
+ peer_cont_num    | text                        |           |          |
+ source_vend      | text                        |           |          |
+ marketable       | character(1)                |           |          |
+ nickname         | text                        |           |          |
+ customer_search  | text                        |           |          |
+ txn_num_search   | text                        |           |          |
+ keyword_search   | text                        |           |          |
+
+### Fields to Export and add to DnB
+
+SELECT cust_num, cont_num, name, email_addr, phone, last_quote_date FROM erp.contact;
+
+### What are potential inactive flags?
+
+SELECT inactive, marketable, email_mkt_flg, prohibit_sls FROM erp.contact;
+
+SELECT mkt_flag, marketable FROM erp.customer;
+
+### Filter contacts to not market
+
+WHERE erp.contact.email_mkt_flag <> 'N' 
+AND erp.contact.inactive <> 'Y' 
+AND erp.contact.prohibit_sls <> 'Y'
+AND erp.customer.mkt_flag <> 'N'
+AND erp.customer.marketable <> 'N'
+
+### Distribution of Values per Column (sub in field)
+
+SELECT DISTINCT col FROM table;
+
+OR
+
+SELECT  col1, COUNT(col1) FROM erp.contact GROUP BY col1;
+
+### JOIN erp.contact AND erp.customer ON cust_num
+
+SELECT
+CONCAT(erp.contact.cont_num, erp.contact.cust_num) AS unique_id,
+erp.contact.first_name, 
+erp.contact.last_name, 
+erp.contact.email_addr,
+erp.contact.address1, 
+erp.contact.address2, 
+erp.contact.address3, 
+erp.contact.city, 
+erp.contact.state, 
+erp.contact.zip, 
+erp.customer.name, 
+erp.contact.cont_num, 
+erp.contact.cust_num, 
+erp.contact.last_quote_date, 
+erp.customer.parent 
+FROM erp.contact
+JOIN erp.customer
+ON erp.contact.cust_num = erp.customer.cust_num;
+
+##### On one line
+
+SELECT CONCAT(erp.contact.cont_num, erp.contact.cust_num) AS unique_id, erp.contact.first_name, erp.contact.last_name, erp.contact.email_addr, erp.contact.address1, erp.contact.address2, erp.contact.address3, erp.contact.city, erp.contact.state, erp.contact.zip, erp.customer.name, erp.contact.cont_num, erp.contact.cust_num, erp.contact.last_quote_date, erp.customer.parent FROM erp.contact JOIN erp.customer ON erp.contact.cust_num = erp.customer.cust_num WHERE erp.customer.parent = 'GRAY';
+
+### Bin Values to last_quote_date - DEFINE last_quote_date ranges, parent
+
+SELECT 
+erp.contact.cont_num, 
+erp.contact.cust_num, 
+erp.contact.name, 
+erp.contact.email_addr, 
+erp.contact.last_quote_date, 
+erp.customer.cust_num, 
+erp.customer.parent, 
+CASE 
+WHEN erp.contact.last_quote_date BETWEEN '1999-01-01' AND '2004-12-31' THEN '1999 - 2004'
+WHEN erp.contact.last_quote_date BETWEEN '2005-01-01' AND '2010-12-31' THEN '2005 - 2009' 
+WHEN erp.contact.last_quote_date BETWEEN '2010-01-01' AND '2015-12-31' THEN '2010 - 2014'
+WHEN erp.contact.last_quote_date BETWEEN '2015-01-01' AND '2020-12-31' THEN '2015 - 2019'
+WHEN erp.contact.last_quote_date BETWEEN '2020-01-01' AND '2020-12-31' THEN '2020 - 2021'
+ELSE '?' 
+END 
+AS last_quote_date_bin
+FROM erp.contact 
+JOIN erp.customer 
+ON erp.contact.cust_num = erp.customer.cust_num
+WHERE erp.customer.parent = 'GRAY';
+
+### Clean Contact List
+
+SELECT 
+erp.contact.cont_num, 
+erp.contact.cust_num, 
+erp.contact.name, 
+erp.contact.email_addr, 
+erp.contact.last_quote_date, 
+erp.customer.cust_num, 
+erp.customer.parent, 
+CASE 
+WHEN erp.contact.last_quote_date BETWEEN '1999-01-01' AND '2004-12-31' THEN '1999 - 2004'
+WHEN erp.contact.last_quote_date BETWEEN '2005-01-01' AND '2010-12-31' THEN '2005 - 2009' 
+WHEN erp.contact.last_quote_date BETWEEN '2010-01-01' AND '2015-12-31' THEN '2010 - 2014'
+WHEN erp.contact.last_quote_date BETWEEN '2015-01-01' AND '2020-12-31' THEN '2015 - 2019'
+WHEN erp.contact.last_quote_date BETWEEN '2020-01-01' AND '2020-12-31' THEN '2020 - 2021'
+ELSE '?' 
+END 
+AS last_quote_date_bin 
+FROM erp.contact 
+JOIN erp.customer 
+ON erp.contact.cust_num = erp.customer.cust_num
+WHERE erp.contact.email_mkt_flg <> 'N' 
+AND erp.contact.inactive <> 'Y' 
+AND erp.contact.prohibit_sls <> 'Y'
+AND erp.customer.mkt_flag <> 'N'
+AND erp.customer.marketable <> 'N';
+
+### Clean Contact (in one line)
+
+SELECT erp.contact.cont_num, erp.contact.cust_num, erp.contact.name, erp.contact.email_addr, erp.contact.last_quote_date, erp.customer.cust_num, erp.customer.parent, CASE WHEN erp.contact.last_quote_date BETWEEN '1999-01-01' AND'2004-12-31' THEN '1999 - 2004' WHEN erp.contact.last_quote_date BETWEEN '2005-01-01' AND '2010-12-31' THEN '2005 - 2009' WHEN erp.contact.last_quote_date BETWEEN '2010-01-01' AND '2015-12-31' THEN '2010 - 2014' WHEN erp.contact.last_quote_date BETWEEN '2015-01-01' AND '2020-12-31' THEN '2015 - 2019' WHEN erp.contact.last_quote_date BETWEEN '2020-01-01' AND '2020-12-31' THEN '2020 - 2021'ELSE '?' END AS last_quote_date_bin FROM erp.contact JOIN erp.customer ON erp.contact.cust_num = erp.customer.cust_num WHERE erp.contact.email_mkt_flg <> 'N' AND erp.contact.inactive <> 'Y' AND erp.contact.prohibit_sls <> 'Y' AND erp.customer.mkt_flag <> 'N' AND erp.customer.marketable <> 'N';
+
+### GROUP BY CASE WHEN Parameters
+
+count(CASE WHEN erp.contact.last_quote_date BETWEEN '1999-01-01' AND '2004-12-31' THEN 1 END) AS '1999 - 2004', 
+count(CASE WHEN erp.contact.last_quote_date BETWEEN '2005-01-01' AND '2010-12-31' THEN 1END) AS '2005 - 2009', 
+count(CASE WHEN erp.contact.last_quote_date BETWEEN '2010-01-01' AND '2015-12-31' THEN 1 END) AS '2010 - 2014', 
+count(CASE WHEN erp.contact.last_quote_date BETWEEN '2015-01-01' AND '2020-12-31' THEN 1 END) AS '2015 - 2019', 
+count(CASE WHEN erp.contact.last_quote_date BETWEEN '2020-01-01' AND '2020-12-31' THEN 1 END) AS '2020 - 2021' 
+
+### Add CSV to PSQL pq server
+
+For this server, how to can be found here:  https://github.com/IntelliTree/Candela/wiki/Export-CSV-from-Pg  
+e.g., '\copy ($sql) to filename.csv csv header'
+
+### Pull CSV from PSQL pg server
+
+From local CMD:
+pscp mike@pg:/home/mike/mbb_nums.to-clear.csv .

@@ -1,0 +1,7 @@
+psql candela_erp
+
+select * from erp.order_hdr where wb = 'EWW' and order_date = '2020-10-05';
+
+select id, tot_cost from erp.order_hdr where wb = 'EWW' and order_date = '2020-10-05';
+
+\d erp.order_hdr

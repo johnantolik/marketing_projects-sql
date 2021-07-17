@@ -1,0 +1,24 @@
+Quotes
+
+Orders
+
+### Orders
+
+SELECT * FROM pg_catalog.pg_tables;
+
+### erp.order.analysis
+
+with Quote/Order history, it can "do its thing"
+
+### Max, Min
+
+select max(tot_amt), min(tot_amt) from erp.order_hdr;
+
+### ntile buckets on erp.order_hdr
+
+select ntile, min(tot_amt), max(tot_amt) from (select tot_amt, ntile(4) over (order by tot_amt) from erp.order_hdr) x group by ntile order by ntile;
+
+### over operator on erp.estatus_users
+
+select signup_date, count(id) as count, sum(count(id)) over (order by signup_date) as running_total from erp.estatus_users group by signup_date order by signup_date;
+

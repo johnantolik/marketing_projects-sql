@@ -1,0 +1,16 @@
+### List of Tables
+
+SELECT * FROM pg_catalog.pg_tables WHERE schemaname <> 'dm' AND shemaname <> 'pa';
+
+### Explore which tables are active
+
+#### \d pim.price (not erp.price)
+
+#### \d pim.prd_vend_cost
+
+#### \d pim.prd_vend
+
+#### \d pim.email
+
+### Explore relationships between Product, Cost, Price
+

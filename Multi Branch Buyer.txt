@@ -1,0 +1,46 @@
+### Enter PSQL
+
+psql candela_erp
+candela_erp=# select * from erp.contact_mbb;
+
+### 
+
+SELECT mbb_num, count(mbb_num), count(CASE WHEN main_flag = 'Y' THEN 1 END) AS main_flag_count from erp.contact_mbb GROUP BY mbb_num;
+
+### Counting All Main_Flag AND Valid_Flag Values
+
+SELECT mbb_num, count(mbb_num), count(CASE WHEN main_flag = 'Y' THEN 1 END) AS main_flag_count, count(CASE WHEN valid_flag = 'Y' THEN 1 END) AS val_flag_Y_count, count(CASE WHEN valid_flag = 'I' THEN 1 END) AS val_flag_I_count, count(CASE WHEN valid_flag = 'X' THEN 1 END) AS val_flag_X_count, count(CASE WHEN valid_flag= 'N' THEN 1 END) AS val_flag_N_count FROM erp.contact_mbb GROUP BY mbb_num;
+
+### Counting All Main_Flag AND Valid_Flag Values AND ORDER BY count_mbb_num
+
+SELECT mbb_num, count(mbb_num) AS mbb_num_count, count(CASE WHEN main_flag = 'Y' THEN 1 END) AS main_flag_y_count, count(CASE WHEN valid_flag = 'Y' THEN 1 END) AS val_flag_Y_count, count(CASE WHEN valid_flag = 'I' THEN 1 END) AS val_flag_I_count, count(CASE WHEN valid_flag = 'X' THEN 1 END) AS val_flag_X_count, count(CASE WHEN valid_flag= 'N' THEN 1 END) AS val_flag_N_count FROM erp.contact_mbb GROUP BY mbb_num ORDER BY count(mbb_num) DESC;
+
+### JOIN erp.contact WITH erp.contact_mbb ON (contact_id = id)
+
+select erp.contact_mbb.mbb_num, erp.contact_mbb.main_flag, erp.contact_mbb.valid_flag, erp.contact.name, erp.contact.cust_num, erp.contact.cont_num from erp.contact_mbb JOIN erp.contact ON (erp.contact_mbb.contact_id = erp.contact.id) ORDER BY mbb_num ASC;
+
+### JOIN, GROUP BY, and COUNT DISTINCT name
+
+SELECT erp.contact_mbb.mbb_num, COUNT(erp.contact_mbb.mbb_num) AS mbb_num_count, COUNT(CASE WHEN erp.contact_mbb.main_flag = 'Y' THEN 1 END) AS main_flag_count, COUNT(CASE WHEN valid_flag = 'Y' THEN 1 END) AS val_flag_Y_count, COUNT(CASE WHEN valid_flag = 'I' THEN 1 END) AS val_flag_I_count, COUNT(CASE WHEN valid_flag = 'X' THEN 1 END) AS val_flag_X_count, COUNT(CASE WHEN valid_flag= 'N' THEN 1 END) AS val_flag_N_count, COUNT(DISTINCT erp.contact.name) AS count_distinct_name FROM erp.contact_mbb JOIN erp.contact ON (erp.contact_mbb.contact_id = erp.contact.id) GROUP BY erp.contact_mbb.mbb_num ORDER BY count(erp.contact_mbb.mbb_num) DESC;
+
+### JOIN, GROUP BY, HAVING COUNT DISTINCT NAME > 3
+
+SELECT erp.contact_mbb.mbb_num, COUNT(erp.contact_mbb.mbb_num) AS mbb_num_count, COUNT(CASE WHEN erp.contact_mbb.main_flag = 'Y' THEN 1 END) AS main_flag_count, COUNT(CASE WHEN valid_flag = 'Y' THEN 1 END) AS val_flag_Y_count, COUNT(CASE WHEN valid_flag = 'I' THEN 1 END) AS val_flag_I_count, COUNT(CASE WHEN valid_flag = 'X' THEN 1 END) AS val_flag_X_count, COUNT(CASE WHEN valid_flag= 'N' THEN 1 END) AS val_flag_N_count, COUNT(DISTINCT erp.contact.name) AS count_distinct_name FROM erp.contact_mbb JOIN erp.contact ON (erp.contact_mbb.contact_id = erp.contact.id) GROUP BY erp.contact_mbb.mbb_num HAVING COUNT(DISTINCT erp.contact.name) > 3;
+
+### Simpler list to clear out
+
+SELECT erp.contact_mbb.mbb_num, COUNT(erp.contact_mbb.mbb_num) AS mbb_num_count, COUNT(DISTINCT erp.contact.name) AS count_distinct_name FROM erp.contact_mbb JOIN erp.contact ON (erp.contact_mbb.contact_id = erp.contact.id) GROUP BY erp.contact_mbb.mbb_num HAVING COUNT(DISTINCT erp.contact.name) > 3;
+
+### count_distinct_name - val_flag_N_count > 3
+
+SELECT erp.contact_mbb.mbb_num, COUNT(erp.contact_mbb.mbb_num) AS mbb_num_count, COUNT(DISTINCT erp.contact.name) AS count_distinct_name, COUNT(CASE WHEN erp.contact_mbb.valid_flag= 'N' THEN 1 END) AS val_flag_N_count FROM erp.contact_mbb JOIN erp.contact ON (erp.contact_mbb.contact_id = erp.contact.id) GROUP BY erp.contact_mbb.mbb_num HAVING COUNT(DISTINCT erp.contact.name) - COUNT(CASE WHEN erp.contact_mbb.valid_flag= 'N' THEN 1 END) > 3;
+
+### Add CSV to PSQL pq server
+
+For this server, how to can be found here:  https://github.com/IntelliTree/Candela/wiki/Export-CSV-from-Pg  
+e.g., '\copy ($sql) to filename.csv csv header'
+
+### Pull CSV from PSQL pg server
+
+From local CMD:
+pscp mike@pg:/home/mike/mbb_nums.to-clear.csv 
